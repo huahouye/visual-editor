@@ -86,6 +86,7 @@ class _SelectHeaderStyleButtonState extends State<SelectHeaderStyleButton> {
       mainAxisSize: MainAxisSize.min,
       children: List.generate(4, (index) {
         return Container(
+          color: Colors.green,
           // ignore: prefer_const_constructors
           margin: EdgeInsets.symmetric(
             horizontal: !kIsWeb ? 1.0 : widget.buttonsSpacing,

@@ -25,6 +25,8 @@ class _DeltaSandboxState extends State<DeltaSandbox> {
   final _scrollController = ScrollController();
   late TextEditingController _jsonInputController;
   late final StreamSubscription _jsonInputListener;
+  bool _isExpanded = true;
+  bool _isMobile = false;
 
   // We use the focus to check if editor or json input has triggered the change.
   // This is essential for preventing a circular update loop between editor and input.
@@ -47,24 +49,50 @@ class _DeltaSandboxState extends State<DeltaSandbox> {
   }
 
   @override
-  Widget build(BuildContext context) => _scaffoldRow(
-        children: [
-          _col(
-            children: [
-              _editor(),
-              _toolbar(),
-            ],
-          ),
-          _jsonPreview(),
-        ],
-      );
+  Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    _isMobile = width < 800.0;
 
-  Widget _scaffoldRow({required List<Widget> children}) => DemoScaffold(
+    return _scaffoldRow(
+      headerChildren: [
+        _button(),
+      ],
+      children: [
+        _col(
+          children: [
+            _editor(),
+            _toolbar(),
+            _isMobile ? _jsonPreview() : SizedBox.shrink()
+          ],
+        ),
+        _isMobile ? SizedBox.shrink() : _jsonPreview(),
+      ],
+    );
+  }
+
+  Widget _scaffoldRow({
+    required List<Widget> headerChildren,
+    required List<Widget> children,
+  }) =>
+      DemoScaffold(
+        headerChildren: headerChildren,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: children,
         ),
       );
+
+  Widget _button() => _isMobile
+      ? Padding(
+          padding: EdgeInsets.only(right: 10),
+          child: IconButton(
+            onPressed: _toggleExpandedEditor,
+            icon: _isExpanded
+                ? Icon(Icons.arrow_downward)
+                : Icon(Icons.arrow_upward),
+          ),
+        )
+      : SizedBox.shrink();
 
   Widget _col({required List<Widget> children}) => Expanded(
         child: Column(
@@ -72,21 +100,21 @@ class _DeltaSandboxState extends State<DeltaSandbox> {
         ),
       );
 
-  Widget _editor() => Expanded(
-        child: SingleChildScrollView(
-          child: Container(
-            color: Colors.white,
-            padding: const EdgeInsets.only(
-              left: 16,
-              right: 16,
-            ),
-            child: VisualEditor(
-              controller: _editorController,
-              scrollController: _scrollController,
-              focusNode: _focusNode,
-              config: EditorConfigM(
-                placeholder: 'Enter text',
-              ),
+  Widget _editor() => SingleChildScrollView(
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: 200),
+          height: _isExpanded ? 200 : 350,
+          color: Colors.white,
+          padding: EdgeInsets.only(
+            left: 15,
+            right: 15,
+          ),
+          child: VisualEditor(
+            controller: _editorController,
+            scrollController: _scrollController,
+            focusNode: _focusNode,
+            config: EditorConfigM(
+              placeholder: 'Enter text',
             ),
           ),
         ),
@@ -112,6 +140,12 @@ class _DeltaSandboxState extends State<DeltaSandbox> {
       );
 
   // === UTILS ===
+
+  void _toggleExpandedEditor() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+    });
+  }
 
   void _setupEditorController() {
     _editorController = EditorController(
